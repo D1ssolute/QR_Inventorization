@@ -7,11 +7,11 @@ import time
 """Предполагается, что склад в рамках кейса состоит из одной площадки в которой находится 2 ряда полок по 3 предмета
 в каждой (подробнее в инструкции). Некоторые предметы могут отсутствовать, но дрон всё равно попытается их найти.
 Площадка определяется следующими параметрами:"""
-storage_height = 2
-storage_width = 3
-x_inc = float(0.5)  # расстояние между соседними предметами в одном ряду
-z_inc = float(0.5)  # расстояние между рядами
-start_height = float(1.5)  # высота верхней полки
+STORAGE_HEIGHT = 2
+STORAGE_WIDTH = 3
+X_INC = float(0.5)  # расстояние между соседними предметами в одном ряду
+Z_INC = float(0.5)  # расстояние между рядами
+START_HEIGHT = float(1.5)  # высота верхней полки
 
 
 def inventorize(drone, camera_ip):
@@ -28,7 +28,7 @@ def inventorize(drone, camera_ip):
     storage_quantity = []  # массив для сохранения кол-ва хранящихся предметов
     counter = 1
     command_x = float(0)
-    command_z = float(start_height)
+    command_z = float(START_HEIGHT)
     detector = cv2.QRCodeDetector()  # инициализация детектора для сканирования QR-кодов
     new_point = True
     while True:
@@ -66,7 +66,7 @@ def inventorize(drone, camera_ip):
                     storage_name.append("None")
                     storage_quantity.append(int(0))
 
-                if counter == storage_height * storage_width:  # если ячейка последняя
+                if counter == STORAGE_HEIGHT * STORAGE_WIDTH:  # если ячейка последняя
                     print("[INFO] Инвентаризация завершена:")
                     print(storage_name)
                     print(storage_quantity)
@@ -76,11 +76,11 @@ def inventorize(drone, camera_ip):
                         if drone.point_reached():
                             drone.land()
                             return storage_name, storage_quantity
-                elif counter == storage_width:  # если ячейка последняя в ряду - переход на новый ряд
+                elif counter == STORAGE_WIDTH:  # если ячейка последняя в ряду - переход на новый ряд
                     command_x = float(0)
-                    command_z -= z_inc
+                    command_z -= Z_INC
                 else:
-                    command_x += x_inc
+                    command_x += X_INC
                 new_point = True
                 counter += 1
         except cv2.error:
@@ -108,14 +108,14 @@ def find_item(result, drone):
     row = 0
     # т.к. номера ячеек проставляются друг за другом, с помощью цикла нужно определить конкретный ряд, где находится
     # данная ячейка, а так же её *столбец*
-    for j in range(storage_height-1):
-        if col < storage_width:
+    for j in range(STORAGE_HEIGHT-1):
+        if col < STORAGE_WIDTH:
             row = j
             break
         else:
-            col -= storage_width
-    cmd_x = float(x_inc*col)  # определяем расстояние до столбца с предметом
-    cmd_z = start_height-float(z_inc*row)  # определяем высоту нужного ряда
+            col -= STORAGE_WIDTH
+    cmd_x = float(X_INC*col)  # определяем расстояние до столбца с предметом
+    cmd_z = START_HEIGHT-float(Z_INC*row)  # определяем высоту нужного ряда
     drone.go_to_local_point(x=cmd_x, y=0, z=cmd_z, yaw=0)
     while True:
         if drone.point_reached():
